@@ -22,7 +22,7 @@ services:
   cupsd:
     command: /scripts/run-cupsd.sh
     override: replace
-    on-failure: restart
+    on-failure: shutdown
     startup: enabled
     after: [dbus]
 

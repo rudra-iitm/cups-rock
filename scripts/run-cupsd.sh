@@ -16,7 +16,7 @@ if [ -z "${CUPS_PASSWORD:-}" ]; then
 
     # Output default administrative credentials
     echo "Default administrative CUPS credentials are username: $CUPS_ADMIN, password: $CUPS_PASSWORD"
-    
+
     # Output the default credentials to a file
     credentials_file="/etc/cups/cups-credentials"
     echo "Username: $CUPS_ADMIN" > "$credentials_file"
@@ -29,16 +29,24 @@ if ! id -u "$CUPS_ADMIN" > /dev/null 2>&1; then
     # Create the user and add to lpadmin group
     useradd -r -G lpadmin -M "$CUPS_ADMIN"
 else
-    # Ensure the user is a member of lpadmin group
+    # Ensure the user is a member of the lpadmin group
     usermod -aG lpadmin "$CUPS_ADMIN"
 fi
 
 # Set the user's password
 echo "$CUPS_ADMIN:$CUPS_PASSWORD" | chpasswd
 
+# Precheck: Ensure CUPS_PORT is a number or undefined
+if [ -n "${CUPS_PORT:-}" ]; then
+    if ! echo "$CUPS_PORT" | grep -Eq '^[0-9]+$'; then
+        echo "Error: CUPS_PORT must be a valid number" >&2
+        exit 1
+    fi
+fi
+
 # Configure cupsd.conf
 if [ -f /etc/cups/cupsd.conf ]; then
-    sed -i 's/Listen localhost:631/Listen 0.0.0.0:631/' /etc/cups/cupsd.conf
+    sed -i "s/Listen localhost:631/Listen 0.0.0.0:${CUPS_PORT:-631}/" /etc/cups/cupsd.conf
     sed -i 's/Browsing Off/Browsing Yes/' /etc/cups/cupsd.conf
     sed -i 's/<Location \/>/<Location \/>\n  Allow All/' /etc/cups/cupsd.conf
     sed -i 's/<Location \/admin>/<Location \/admin>\n  Allow All/' /etc/cups/cupsd.conf
@@ -48,7 +56,7 @@ if [ -f /etc/cups/cupsd.conf ]; then
     echo "ServerAlias *" >> /etc/cups/cupsd.conf
     echo "DefaultEncryption Never" >> /etc/cups/cupsd.conf
 
-    # Starting cups in debug mode
+    # Start CUPS in debug mode
     sed -i 's/LogLevel warn/LogLevel debug/' /etc/cups/cupsd.conf
 else
     echo "/etc/cups/cupsd.conf not found"
