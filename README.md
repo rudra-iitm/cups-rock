@@ -51,12 +51,15 @@ Open another terminal session and start the CUPS container with the following en
 ```sh
 CUPS_ADMIN=<cups_username>
 CUPS_PASSWORD=<cups_password>
+CUPS_PORT=<port>
 ```
 
 ##### Run the following Docker command to run the cups image:
 ```sh
-sudo docker run --rm -d --name cups -p <port>:631 \
-    -e CUPS_ADMIN="${CUPS_ADMIN}" -e CUPS_PASSWORD="${CUPS_PASSWORD}" \
+sudo docker run --rm -d --name cups --network host \
+    -e CUPS_PORT="${CUPS_PORT}" \
+    -e CUPS_ADMIN="${CUPS_ADMIN}" \
+    -e CUPS_PASSWORD="${CUPS_PASSWORD}" \
     openprinting/cups:latest
 ```
 
@@ -97,8 +100,10 @@ sudo rockcraft.skopeo --insecure-policy copy oci-archive:<rock_image> docker-dae
 #### Run the CUPS Docker Container:
 
 ```sh
-sudo docker run --rm -d --name cups -p <port>:631 \
-    -e CUPS_ADMIN="${CUPS_ADMIN}" -e CUPS_PASSWORD="${CUPS_PASSWORD}" \
+sudo docker run --rm -d --name cups --network host \
+    -e CUPS_PORT="${CUPS_PORT}" \
+    -e CUPS_ADMIN="${CUPS_ADMIN}" \
+    -e CUPS_PASSWORD="${CUPS_PASSWORD}" \
     cups:latest
 ```
 
@@ -108,9 +113,11 @@ sudo docker run --rm -d --name cups -p <port>:631 \
     ```sh
     sudo docker exec cups cat /etc/cups/cups-credentials
     ```
+- `CUPS_PORT` is an optional flag used to start CUPS on a specified port. If not provided, it will start on the default port 631.
+- **The container must be started in `--network host` mode** to allow the CUPS instance inside the container to access and discover local printers running on the host system.
 
 ### Accessing the CUPS Web Interface
-- The CUPS web interface can be accessed at `http://localhost:<port>` to manage printers and check job statuses.
+- The CUPS web interface can be accessed at `http://localhost:CUPS_PORT` to manage printers and check job statuses.
 
 ## CUPS Commands
 To use use the cups's command line utilities acting on the CUPS image, proceed the commands with following format:
@@ -133,6 +140,6 @@ CUPS_SERVER=localhost:<port> <command>
 Example:
 To check the print status:
 ```sh
-CUPS_SERVER=localhost:<port> lpstat -W completed
+CUPS_SERVER=localhost:CUPS_PORT lpstat -W completed
 ```
 **Note to use cups administrative task pass -U flag with lpadmin command**

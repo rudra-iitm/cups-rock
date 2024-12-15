@@ -32,12 +32,15 @@ Open another terminal session and start the CUPS container with the following en
 ```sh
 CUPS_ADMIN="print"
 CUPS_PASSWORD="print"
+CUPS_PORT=631
 ```
 
 #### Run the following Docker command to start cups available on docker hub:
 ```sh
-sudo docker run --rm -d --name cups -p <port>:631 \
-    -e CUPS_ADMIN="${CUPS_ADMIN}" -e CUPS_PASSWORD="${CUPS_PASSWORD}" \
+sudo docker run --rm -d --name cups --network host \
+    -e CUPS_PORT="${CUPS_PORT}" \
+    -e CUPS_ADMIN="${CUPS_ADMIN}" \
+    -e CUPS_PASSWORD="${CUPS_PASSWORD}" \
     openprinting/cups:latest
 ```
 
@@ -59,8 +62,11 @@ Alternatively:
     ```
 3. Run the CUPS Docker Container:
     ```sh
-    sudo docker run --rm -d --name cups -p <port>:631 \
-        -e CUPS_ADMIN="${CUPS_ADMIN}" -e CUPS_PASSWORD="${CUPS_PASSWORD}" \
+    ```sh
+    sudo docker run --rm -d --name cups --network host \
+        -e CUPS_PORT="${CUPS_PORT}" \
+        -e CUPS_ADMIN="${CUPS_ADMIN}" \
+        -e CUPS_PASSWORD="${CUPS_PASSWORD}" \
         cups:latest
     ```
 
@@ -76,12 +82,12 @@ sudo docker exec -u "${CUPS_ADMIN}" cups lpadmin -p testprinter \
 To test printing files from the host system:
 
 ```sh
-CUPS_SERVER=localhost:<port> lp -d testprinter <file>
+CUPS_SERVER=localhost:CUPS_PORT lp -d testprinter <file>
 ```
 
 To check the print status:
 ```sh
-CUPS_SERVER=localhost:<port> lpstat -W completed
+CUPS_SERVER=localhost:CUPS_PORT lpstat -W completed
 ```
 
 #### From Inside the Container
@@ -116,4 +122,5 @@ You can also use the CUPS web interface to check the job status.
 
 ## Notes
 - Ensure all the environment variables are correctly set before running the Docker commands.
-- The CUPS web interface can be accessed at `http://localhost:<port>` to manage printers and check job statuses.
+- The CUPS web interface can be accessed at `http://localhost:CUPS_PORT` to manage printers and check job statuses.
+- **The container must be started in `--network host` mode** to allow the CUPS instance inside the container to access and discover local printers running on the host system.
